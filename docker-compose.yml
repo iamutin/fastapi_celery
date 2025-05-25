@@ -1,0 +1,30 @@
+services:
+  api:
+    build: .
+    container_name: api
+    ports:
+      - "8000:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  redis:
+    image: redis:7.4.1-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+
+  celery:
+    build: .
+    container_name: celery
+    command: celery -A app.celery_app worker --loglevel=info
+    env_file:
+      - .env
+    depends_on:
+      redis:
+        condition: service_healthy
